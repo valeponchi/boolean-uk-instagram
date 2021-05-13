@@ -64,9 +64,51 @@ function createMain() {
 
     //FORM
 // function createPostForm() {
-    let createPostForm = document.createElement("form")
-    createPostForm.getAttribute("id", "create-post-form")
-    createPostForm.getAttribute("autocomplete", "off")
+    let newPostForm = document.createElement("form")
+    newPostForm.getAttribute("id", "create-post-form")
+    newPostForm.getAttribute("autocomplete", "off")
+    newPostForm.addEventListener("submit", function(e) { 
+      e.preventDefault()
+      fetch(`http://localhost:3000/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "title": titleInput.value,
+          "content": textareaEl.value,
+          "image": {
+            "src": imgInput.value,
+          } //image
+        }) //body
+      }) //fetch
+      .then(function(response) {
+        if (response.ok) {
+          let postImgEl = document.createElement("div")
+          postImgEl.setAttribute("class", "post--image")
+
+          let imgEl = document.createElement("img")
+          imgEl.setAttribute("src", post.image.src)
+          imgEl.setAttribute("alt", post.image.alt)
+
+          postImgEl.append(imgEl)
+
+          // POST CONTENT SECTION
+          let postContentEl = document.createElement("div")
+          postContentEl.setAttribute("class", "post--content")
+
+          let h2El = document.createElement("h2")
+          h2El.innerText = post.title
+
+          let pEl = document.createElement("p")
+          pEl.innerText = post.content
+
+          postContentEl.append(h2El, pEl)
+
+          formEl.reset()
+        } //if response.ok
+      }) //.then
+   })
     
     let createPosth2 = document.createElement("h2")
     createPosth2.innerText = "Create a post"
@@ -111,53 +153,21 @@ function createMain() {
     submitBtn.getAttribute(`type`, `submit`)
     submitBtn.innerText = "Post"
     
-    createPostForm.addEventListener("submit", function(e) { 
-      e.preventDefault()
-      fetch(`http://localhost:3000/posts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "title": titleInput.value,
-          "content": textareaEl.value,
-          "image": {
-            "src": imgInput.value,
-          } //image
-        }) //body
-      }) //fetch
-      .then(function(response) {
-        if (response.ok) {
-          let postImgEl = document.createElement("div")
-          postImgEl.setAttribute("class", "post--image")
-
-          let imgEl = document.createElement("img")
-          imgEl.setAttribute("src", post.image.src)
-          imgEl.setAttribute("alt", post.image.alt)
-
-          postImgEl.append(imgEl)
-
-          // POST CONTENT SECTION
-          let postContentEl = document.createElement("div")
-          postContentEl.setAttribute("class", "post--content")
-
-          let h2El = document.createElement("h2")
-          h2El.innerText = post.title
-
-          let pEl = document.createElement("p")
-          pEl.innerText = post.content
-
-          postContentEl.append(h2El, pEl)
-
-          formEl.reset()
-        } //if response.ok
-      }) //.then
-   })
+   
 
     // createPostForm()
     actionBtnDiv.append(previewBtn, submitBtn)
-    createPostForm.append(createPosth2, imgLabel, imgInput, postTitleLabel, titleInput, textareaLabel, textareaEl, actionBtnDiv)
-    createPostSection.append(createPostForm)
+    newPostForm.append(
+      createPosth2, 
+      imgLabel, 
+      imgInput, 
+      postTitleLabel, 
+      titleInput, 
+      textareaLabel, 
+      textareaEl, 
+      actionBtnDiv
+      )
+    createPostSection.append(newPostForm)
     
     const feedSectionEl = createFeedSection()
     
@@ -177,7 +187,6 @@ function createFeedSection() {
   //fetch GET
     fetch("http://localhost:3000/posts")
     .then(function (response) {
-console.log("getPostsResponse; ", response)
       return response.json()  //posts from json are transformed into obj-js
     })
     .then(function (posts) {
