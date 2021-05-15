@@ -38,305 +38,325 @@ let posts = []
 let users = []
 
 
-//HEADER 
-function createHeader() {
-    let headerEl = document.createElement(`header`)
-    headerEl.setAttribute("class", "main-header")
-    // headerEl.classList.add(`main-header`)
-    
-    let wrapperEl = document.createElement(`div`)
-    wrapperEl.setAttribute("class", "header wrapper")
-    // wrapperEl.classList.add(`wrapper`)
 
-    headerEl.append(wrapperEl)
-    rootEl.append(headerEl) //rootEl is in the HTML file
+fetchUsers().then(function(fetchedUsers) {
+  users = fetchedUsers //here I have the users in js-data (obj)
+  fetchPosts().then(function(fetchedPosts) {
+    posts = fetchedPosts //here I have the posts in js-data (obj)
+    //at this point I have both users and posts available
+    createHeader()
+    createUserChipsAndAppendToWrapper()
+    createMain()
+  })
+})
+
+function fetchUsers() {
+  return fetch("http://localhost:3000/users") //get users as json-data from server
+  .then(function (response) {
+    return response.json() //trasform json-data into js-data (obj)
+  })
 }
 
-//MAIN 
+function fetchPosts() {
+  return fetch("http://localhost:3000/posts")
+  .then(function(response) {
+    return response.json()
+  })
+}
+
+//this f is a creates and appends
+function createHeader() { 
+  const headerEl = document.createElement("header");
+  headerEl.setAttribute("class", "main-header");
+
+  const headerWrapper = document.createElement("div");
+  headerWrapper.setAttribute("class", "header wrapper");
+
+  headerEl.append(headerWrapper);
+  rootEl.append(headerEl);
+}
+
+//this f creates and append
+//needs f createFeedSection
 function createMain() {
-    let mainEl = document.createElement("main")
-    mainEl.setAttribute("class", "wrapper")
-    // mainEl.classList.add(`wrapper`) - this didn't work
+  const mainEl = document.createElement("main");
+  mainEl.setAttribute("class", "wrapper");
 
-    let createPostSection = document.createElement("section")
-    createPostSection.setAttribute("class", "create-post-section")
-    // postSectionEl.classList.add(`create-post-section`) - this didn't work
+  const postSectionEl = createNewPost()
+  const feedSectionEl = createFeedSection();
 
-    //FORM
-// function createPostForm() {
-    let newPostForm = document.createElement("form")
-    newPostForm.getAttribute("id", "create-post-form")
-    newPostForm.getAttribute("autocomplete", "off")
-    newPostForm.addEventListener("submit", function(e) { 
-      e.preventDefault()
-      fetch(`http://localhost:3000/posts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "title": titleInput.value,
-          "content": textareaEl.value,
-          "image": {
-            "src": imgInput.value,
-          } //image
-        }) //body
-      }) //fetch
-      .then(function(response) {
-        if (response.ok) {
-          let postImgEl = document.createElement("div")
-          postImgEl.setAttribute("class", "post--image")
+  mainEl.append(postSectionEl, feedSectionEl);
+  rootEl.append(mainEl);
+}
 
-          let imgEl = document.createElement("img")
-          imgEl.setAttribute("src", post.image.src)
-          imgEl.setAttribute("alt", post.image.alt)
+//input chip img 
+//action create a form for a new post
+//action post it in the Feed Section
+//output
+function createNewPost() {
+  const postSectionEl = document.createElement("section");
+  postSectionEl.setAttribute("class", "create-post-section");
 
-          postImgEl.append(imgEl)
+  const createPostForm = document.createElement("form")
+  createPostForm.setAttribute("id", "create-post-form")
+  createPostForm.setAttribute("autocomplete", "off")
+  const formTitle = document.createElement("h2")
+  formTitle.innerText = "Create a post"
+  //IMAGE NEW POST
+  const ImgLabel = document.createElement("label")
+  ImgLabel.setAttribute("for", "image")
+  ImgLabel.innerText = "Image"
+  const ImgInput = document.createElement("input")
+  ImgInput.setAttribute("id", "image")
+  ImgInput.setAttribute("name", "image")
+  ImgInput.setAttribute("type", "text")
+  // TITLE NEW POST
+  const titleLabel = document.createElement("label")
+  titleLabel.setAttribute("for", "title")
+  titleLabel.innerText = "Title"
+  const titleInput = document.createElement("input")
+  titleInput.setAttribute("id", "title")
+  titleInput.setAttribute("name", "title")
+  titleInput.setAttribute("type", "text")
+  //CONTENT NEW POST
+  const contentLabel = document.createElement("label")
+  contentLabel.setAttribute("for", "content")
+  contentLabel.innerText = "Content"
+  const contentTextarea = document.createElement("textarea")
+  contentTextarea.setAttribute("id", "content")
+  contentTextarea.setAttribute("name", "content")
+  contentTextarea.setAttribute("rows", "2")
+  contentTextarea.setAttribute("columns", "30")
+  //ACTION BUTTONS
+  const actionBtnsDiv = document.createElement("div")
+  actionBtnsDiv.setAttribute("class", "action-btns")
+  const previewBtn = document.createElement("button")
+  previewBtn.setAttribute("id", "preview-btn")
+  previewBtn.setAttribute("type", "button")
+  previewBtn.innerText = "Preview"
+  const submitBtn = document.createElement("button")
+  submitBtn.setAttribute("type", "submit")
+  submitBtn.innerText = "Post"
 
-          // POST CONTENT SECTION
-          let postContentEl = document.createElement("div")
-          postContentEl.setAttribute("class", "post--content")
 
-          let h2El = document.createElement("h2")
-          h2El.innerText = post.title
+  postSectionEl.append(createPostForm)
+  createPostForm.append(
+    formTitle, 
+    ImgLabel,
+    ImgInput,
+    titleLabel,
+    titleInput,
+    contentTextarea,
+    actionBtnsDiv)
+  actionBtnsDiv.append(previewBtn, submitBtn)
 
-          let pEl = document.createElement("p")
-          pEl.innerText = post.content
+  return postSectionEl
+}
 
-          postContentEl.append(h2El, pEl)
+//this f creates using data from the server
+//needs: fetch to work with posts from server, f createPost
+//returns the Feed Section
+function createFeedSection() {
+  const feedSectionEl = document.createElement("section");
+  feedSectionEl.setAttribute("class", "feed");
 
-          formEl.reset()
-        } //if response.ok
-      }) //.then
-   })
-    
-    let createPosth2 = document.createElement("h2")
-    createPosth2.innerText = "Create a post"
-    //img
-    let imgLabel = document.createElement("label")
-    imgLabel.getAttribute("for", "image")
-    imgLabel.innerText = "Image"
-    
-    let imgInput = document.createElement("input")
-    imgInput.getAttribute("id", "image")
-    imgInput.getAttribute("name", "image")
-    imgInput.getAttribute("type", "text")
-    //title
-    let postTitleLabel = document.createElement("label")
-    postTitleLabel.getAttribute("for", "title")
-    postTitleLabel.innerText = "Title"
-    
-    let titleInput = document.createElement("input")
-    titleInput.getAttribute("id", "title")
-    titleInput.getAttribute("name", "title")
-    titleInput.getAttribute("type", "text")
-    //content
-    let textareaLabel = document.createElement(`label`)
-    textareaLabel.getAttribute(`for`, `content`)
-    textareaLabel.innerText = "Content"
+  const ulEl = document.createElement("ul"); //the li of the ul are the actual post the you see on the page
+  ulEl.setAttribute("class", "stack");
 
-    let textareaEl = document.createElement(`textarea`)
-    textareaEl.getAttribute(`id`, `content`)
-    textareaEl.getAttribute(`name`, `content`)
-    textareaEl.getAttribute(`rows`, `2`)
-    textareaEl.getAttribute(`columns`, `30`)
-    //action btn
-    let actionBtnDiv = document.createElement(`div`)
-    actionBtnDiv.getAttribute(`class`, `action-btns`)
-    
-    let previewBtn = document.createElement(`button`)
-    previewBtn.getAttribute(`id`, `preview-btn`)
-    previewBtn.getAttribute(`type`, `button`)
-    previewBtn.innerText = "Preview"
-    
-    let submitBtn = document.createElement(`button`)
-    submitBtn.getAttribute(`type`, `submit`)
-    submitBtn.innerText = "Post"
-    
-   
-
-    // createPostForm()
-    actionBtnDiv.append(previewBtn, submitBtn)
-    newPostForm.append(
-      createPosth2, 
-      imgLabel, 
-      imgInput, 
-      postTitleLabel, 
-      titleInput, 
-      textareaLabel, 
-      textareaEl, 
-      actionBtnDiv
-      )
-    createPostSection.append(newPostForm)
-    
-    const feedSectionEl = createFeedSection()
-    
-    // u[ here at .append createPostLabel missing
-    mainEl.append(createPostSection, feedSectionEl)
-    rootEl.append(mainEl)
+  for (const post of posts) { //is getting the posts from above (scope)
+    // create a post element
+    const postLiEl = createPost(post); //creating the element li for each post
+    ulEl.append(postLiEl);
   }
 
-//create Feeds inside MAIN
-function createFeedSection() {
-  let feedSectionEl = document.createElement("section")
-  feedSectionEl.setAttribute("class", "feed")
-
-  let ulEl = document.createElement("ul")
-  ulEl.setAttribute("class", "stack")
-
-  //fetch GET
-    fetch("http://localhost:3000/posts")
-    .then(function (response) {
-      return response.json()  //posts from json are transformed into obj-js
-    })
-    .then(function (posts) {
-      for (const post of posts) { 
-        let liEl = createPost(post) 
-        ulEl.append(liEl)        
-      }
-    })
-    
-  feedSectionEl.append(ulEl)     //here bc it now has the posts
-  
-  return feedSectionEl          // return feedSectionEl to access it later
+  feedSectionEl.append(ulEl);
+  return feedSectionEl;
 }
 
-//CREATE ONE POST
-function createPost(post) {
-  let liEl = document.createElement("li")
-  liEl.setAttribute("class", "post")
+//this f creates and append one comment getting data from users from above (scope)
+//returns the comment element 
+function createComment(comment) {
+  const user = users.find(function (user) {
+    return user.id === comment.userId;
+  });
 
-  console.log("users:", users)
+  const commentEl = document.createElement("div");
+  commentEl.setAttribute("class", "post--comment");
 
-  let user = users.find(function (user) {
-    return user.id === post.userId
-  })
+  const avatarEl = document.createElement("div");
+  avatarEl.setAttribute("class", "avatar-small");
 
-  let chipEl = createUserChip(user)
+  const commentImgEl = document.createElement("img");
+  commentImgEl.setAttribute("src", user.avatar);
+  commentImgEl.setAttribute("alt", user.username);
 
-  //IMAGE SECTION
-  let postImgEl = document.createElement("div")
-  postImgEl.setAttribute("class", "post--image")
+  avatarEl.append(commentImgEl);
 
-  let imgEl = document.createElement("img")
-  imgEl.setAttribute("src", post.image.src)
-  imgEl.setAttribute("alt", post.image.alt)
+  const commentTextEl = document.createElement("p");
+  commentTextEl.innerText = comment.content;
 
-  postImgEl.append(imgEl)
+  commentEl.append(avatarEl, commentTextEl);
+
+  return commentEl;
+}
+
+//this f creates and appends
+//needs users from above(scope) + f createUserChip 
+function createPost(post) {  //can get the post data from above(scope)
+  const liEl = document.createElement("li");
+  liEl.setAttribute("class", "post");
+
+  const user = users.find(function (user) {
+    return user.id === post.userId;
+  });
+
+  const chipEl = createUserChip(user);
+
+  // POST IMAGE SECTION
+  const postImgEl = document.createElement("div");
+  postImgEl.setAttribute("class", "post--image");
+
+  const imgEl = document.createElement("img");
+  imgEl.setAttribute("src", post.image.src);
+  imgEl.setAttribute("alt", post.image.alt);
+
+  postImgEl.append(imgEl);
 
   // POST CONTENT SECTION
-  let postContentEl = document.createElement("div")
-  postContentEl.setAttribute("class", "post--content")
+  const postContentEl = document.createElement("div");
+  postContentEl.setAttribute("class", "post--content");
 
-  let h2El = document.createElement("h2")
-  h2El.innerText = post.title
+  const h2El = document.createElement("h2");
+  h2El.innerText = post.title;
 
-  let pEl = document.createElement("p")
-  pEl.innerText = post.content
+  const pEl = document.createElement("p");
+  pEl.innerText = post.content;
 
-  postContentEl.append(h2El, pEl)
+  postContentEl.append(h2El, pEl);
 
   // POST COMMENTS SECTION
-  let postCommentsEl = document.createElement("div")
-  postCommentsEl.setAttribute("class", "post--comments")
+  const postCommentsEl = document.createElement("div");
+  postCommentsEl.setAttribute("class", "post--comments");
 
-  let h3El = document.createElement("h3")
-  h3El.innerText = "Comments"
+  const h3El = document.createElement("h3");
+  h3El.innerText = "Comments";
 
-  postCommentsEl.append(h3El)
-  
-  //single comment starts here - with for loop
-  for (let comment of post.comments) {
-    let user = users.find(function (user) {  //reviewed w/ Nico and MDN
-    return user.id === comment.userId
-  })
+  postCommentsEl.append(h3El);
 
-  let commentEl = document.createElement("div")
-  commentEl.setAttribute("class", "post--comment")
-
-  let avatarEl = document.createElement("div")
-  avatarEl.setAttribute("class", "avatar-small")
-
-  let commentImgEl = document.createElement("img")
-  commentImgEl.setAttribute("src", user.avatar)
-  commentImgEl.setAttribute("alt", user.username)
-
-  avatarEl.append(commentImgEl)
-
-  let commentTextEl = document.createElement("p")
-  commentTextEl.innerText = comment.content
-
-  commentEl.append(avatarEl, commentTextEl)
-  postCommentsEl.append(commentEl)
-  //single comment ends here
-}
-
+  for (const comment of post.comments) {
+    const commentEl = createComment(comment);
+    postCommentsEl.append(commentEl);
+  }
 // CREATE COMMENT FORM SECTION
-  let formEl = document.createElement("form")
-  formEl.setAttribute("id", "create-comment-form")
-  formEl.setAttribute("autocomplete", "off")
+const formEl = document.createElement("form");
+formEl.setAttribute("id", "create-comment-form");
+formEl.setAttribute("autocomplete", "off");
 
-  let commentLabelEl = document.createElement("label")
-  commentLabelEl.setAttribute("for", "comment")
-  commentLabelEl.innerText = "Add comment"
+const commentLabelEl = document.createElement("label");
+commentLabelEl.setAttribute("for", "comment");
+commentLabelEl.innerText = "Add comment";
 
-  let commentInputEl = document.createElement("input")
-  commentInputEl.setAttribute("id", "comment")
-  commentInputEl.setAttribute("name", "comment")
-  commentInputEl.setAttribute("type", "text")
+const commentInputEl = document.createElement("input");
+commentInputEl.setAttribute("id", "comment");
+commentInputEl.setAttribute("name", "comment");
+commentInputEl.setAttribute("type", "text");
 
-  let submitBtn = document.createElement("button")
-  submitBtn.setAttribute("type", "submit")
-  submitBtn.innerText = "Comment"
+const submitBtn = document.createElement("button");
+submitBtn.setAttribute("type", "submit");
+submitBtn.innerText = "Comment";
 
-  formEl.append(commentLabelEl, commentInputEl, submitBtn)
+formEl.append(commentLabelEl, commentInputEl, submitBtn);
 
-  liEl.append(chipEl, postImgEl, postContentEl, postCommentsEl, formEl)
+// Add a comment:
 
-  return liEl
+// - listen to post's comment form
+formEl.addEventListener("submit", function (event) {
+  // - prevent the form from refreshing the page
+  event.preventDefault();
+
+  // if there's an active user
+  if (currentUser !== null) {
+    // - get and store comment data
+    const comment = {
+      content: formEl.comment.value,
+      userId: currentUser.id,
+      postId: post.id
+    };
+
+    // - send that data to the server
+    // Method: POST
+    // URL: http://localhost:3000/comments
+    // Body: comment
+    fetch("http://localhost:3000/comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(comment)
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (newCommentFromServer) {
+        // - display the comment on the page
+        // - find the user this comment belongs to
+        // - create and append the comment
+        const commentEl = createCommentElement(newCommentFromServer);
+        postCommentsEl.append(commentEl);
+        formEl.reset();
+      });
+  } else {
+    // no user is active...
+    alert("Please select a user first");
+  }
+});
+
+liEl.append(chipEl, postImgEl, postContentEl, postCommentsEl, formEl);
+
+return liEl;
 }
 
-//
+//this f creates a single user chip - it goes in the header and in the post
+//return the chip element
 function createUserChip(user) {
-  let chipEl = document.createElement("div")
-  chipEl.setAttribute("class", "chip")
+  const chipEl = document.createElement("div");
+  chipEl.setAttribute("class", "chip");
 
-  let avatarEl = document.createElement("div")
-  avatarEl.setAttribute("class", "avatar-small")
+  const avatarEl = document.createElement("div");
+  avatarEl.setAttribute("class", "avatar-small");
 
-  let imgEl = document.createElement("img")
-  imgEl.setAttribute("src", user.avatar)
-  imgEl.setAttribute("alt", user.username)
+  const imgEl = document.createElement("img");
+  imgEl.setAttribute("src", user.avatar);
+  imgEl.setAttribute("alt", user.username);
 
-  avatarEl.append(imgEl)
+  avatarEl.append(imgEl);
 
-  let nameEl = document.createElement("span")
-  nameEl.innerText = user.username
+  const nameEl = document.createElement("span");
+  nameEl.innerText = user.username;
 
-  chipEl.append(avatarEl, nameEl)
+  chipEl.append(avatarEl, nameEl);
 
-  return chipEl
+  return chipEl;
 }
 
-function createUserChips(users) {
-  for (let user of users) {
-    let chipEl = createUserChip(user)
-    let wrapperEl = document.querySelector(".header.wrapper")
-    wrapperEl.append(chipEl)
+//this f creates and append
+//needs f createUserChip + users from above (scope)
+function createUserChipsAndAppendToWrapper() {
+  for (const user of users) {
+    const chipEl = createUserChip(user);
+
+    chipEl.addEventListener("click", function () {
+      currentUser = user;
+
+      const currentChipEl = document.querySelector(".active");
+      if (currentChipEl !== null) {
+        currentChipEl.classList.remove("active");
+      }
+
+      chipEl.classList.add("active");
+    });
+
+    const wrapperEl = document.querySelector(".header.wrapper");
+    wrapperEl.append(chipEl);
   }
 }
-
-function getUsers() {
-  fetch("http://localhost:3000/users")
-    .then(function (response) {
-      return response.json()
-    })
-    .then(function (usersFromServer) {
-      users = usersFromServer
-      createUserChips(users)
-    })
-}
-
-createHeader()
-getUsers()
-createMain()
