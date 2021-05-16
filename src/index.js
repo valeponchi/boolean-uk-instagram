@@ -33,30 +33,25 @@ let rootEl = document.querySelector(`#root`)
 console.log(`rootEl:`, rootEl)
 
 //global variables
-let currentUser  // - Keep track of the currentUser in a global variable so that you have access to their id in all your functions.
+let currentUser = null  // - Keep track of the currentUser in a global variable so that you have access to their id in all your functions.
 let posts = []
 let users = []
 
-
-
-fetchUsers().then(function(fetchedUsers) {
-  users = fetchedUsers //here I have the users in js-data (obj)
-  fetchPosts().then(function(fetchedPosts) {
-    posts = fetchedPosts //here I have the posts in js-data (obj)
-    //at this point I have both users and posts available
-    createHeader()
-    createUserChipsAndAppendToWrapper()
-    createMain()
-  })
-})
-
+// input: none
+// action: get users from server
+// output: Promise<users>
+// dependencies: none
 function fetchUsers() {
+  //method: GET
   return fetch("http://localhost:3000/users") //get users as json-data from server
   .then(function (response) {
     return response.json() //trasform json-data into js-data (obj)
   })
 }
 
+// input: nothing
+// action: getPostsFromServer
+// output: Promise<posts array>
 function fetchPosts() {
   return fetch("http://localhost:3000/posts")
   .then(function(response) {
@@ -64,7 +59,25 @@ function fetchPosts() {
   })
 }
 
-//this f is a creates and appends
+fetchUsers().then(function(fetchedUsers) {
+  users = fetchedUsers //here I have the users in js-data (obj)
+  fetchPosts().then(function(fetchedPosts) {
+    posts = fetchedPosts //here I have the posts in js-data (obj)
+    //at this point I have both users and posts available so I can create:
+    createHeader()
+    createUserChipsAndAppendToWrapper()
+    createMain()
+  })
+})
+
+
+
+ // <<<<<<<<<<<<<<<<<  HEADER >>>>>>>>>>> SINGLE USER CHIP >>>>>>>>>>>>> SINGLE USER CHIP & APPEND IT TO HEADER <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+// input: nothing
+// action: *CREATES the header section, *APPENDS it to the page
+// output: undefined
+// dependencies: none
 function createHeader() { 
   const headerEl = document.createElement("header");
   headerEl.setAttribute("class", "main-header");
@@ -76,13 +89,71 @@ function createHeader() {
   rootEl.append(headerEl);
 }
 
-//this f creates and append
-//needs f createFeedSection
+
+//WHERE used it? - createHeader and createPost
+// input: user <------- PARAMETER -----------
+// action: *CREATES a user chip
+// output: the chip element
+// dependencies: none
+function createUserChip(user) { // PARAMETER
+  const chipEl = document.createElement("div");
+  chipEl.setAttribute("class", "chip");
+
+  const avatarEl = document.createElement("div");
+  avatarEl.setAttribute("class", "avatar-small");
+
+  const imgEl = document.createElement("img");
+  imgEl.setAttribute("src", user.avatar);  
+  imgEl.setAttribute("alt", user.username);
+
+  avatarEl.append(imgEl);
+
+  const nameEl = document.createElement("span");
+  nameEl.innerText = user.username;
+
+  chipEl.append(avatarEl, nameEl);
+
+  return chipEl;
+}
+
+// input: nothing
+// action: *CREATES multiple chips & *APPENDS them to the wrapperEl in header
+// output: undefined
+// dependencies: createUserChip, users 
+function createUserChipsAndAppendToWrapper() {
+  //for loop just to create each user Chip, accessing var Users
+  for (const user of users) { 
+    const chipEl = createUserChip(user);  //<<--PASSING ARGUMENT TO THE f <<-- access from var `users` @beginning of the page
+    
+    //EVENT LISTENER ---> CLICK USER <---
+    chipEl.addEventListener("click", function () {  // (1)when you click one chip (that now has its user-data, the currentUser becomes the User)
+      currentUser = user;
+
+      const currentChipEl = document.querySelector(".active"); //(2) query .active, if a user already has it (it is not null), then remove the .active class to the user that already has the class
+      if (currentChipEl !== null) {
+        currentChipEl.classList.remove("active");
+      }
+
+      chipEl.classList.add("active"); // (3)and give the class .active to the `clicked` user
+    });
+
+    const wrapperEl = document.querySelector(".header.wrapper"); // you can access the header-wrapper because that f is called before this one. Now you can append it to `wrapper`
+    wrapperEl.append(chipEl);
+  }
+}
+
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  MAIN  <<<<<<<<<<<<<<<  CREATE NEW POST <<<<<<<<<< PREVIEW GOES HERE <<<<<<<<<<<< FEED
+// input: nothing
+// action: *CREATES the main section, *APPENDS it to the page
+// output: undefined
+// dependencies: createFeedSection
 function createMain() {
   const mainEl = document.createElement("main");
   mainEl.setAttribute("class", "wrapper");
 
-  const postSectionEl = createNewPost()
+  const postSectionEl = createNewPostSection()
+  //createPreview() //create previewSection <-- now you can querySelect the section where to append it <--it's created in the above f()
   const feedSectionEl = createFeedSection();
 
   mainEl.append(postSectionEl, feedSectionEl);
@@ -90,12 +161,11 @@ function createMain() {
 }
 
 //input chip img 
-//action create a form for a new post
-//action post it in the Feed Section
-//output
-function createNewPost() {
-  const postSectionEl = document.createElement("section");
-  postSectionEl.setAttribute("class", "create-post-section");
+//action *CREATES a form for a new post
+//output newPostSectionEl
+function createNewPostSection() {
+  const newPostSectionEl = document.createElement("section");
+  newPostSectionEl.setAttribute("class", "create-post-section");
 
   const createPostForm = document.createElement("form")
   createPostForm.setAttribute("id", "create-post-form")
@@ -103,13 +173,15 @@ function createNewPost() {
   const formTitle = document.createElement("h2")
   formTitle.innerText = "Create a post"
   //IMAGE NEW POST
-  const ImgLabel = document.createElement("label")
-  ImgLabel.setAttribute("for", "image")
-  ImgLabel.innerText = "Image"
-  const ImgInput = document.createElement("input")
-  ImgInput.setAttribute("id", "image")
-  ImgInput.setAttribute("name", "image")
-  ImgInput.setAttribute("type", "text")
+  const imgLabel = document.createElement("label")
+  imgLabel.setAttribute("for", "image")
+  imgLabel.innerText = "Image"
+  const imgInput = document.createElement("input")
+  imgInput.setAttribute("id", "image")
+  imgInput.setAttribute("name", "image")
+  imgInput.setAttribute("type", "url") //I changed the type to URL
+  imgInput.setAttribute("required", true);
+
   // TITLE NEW POST
   const titleLabel = document.createElement("label")
   titleLabel.setAttribute("for", "title")
@@ -118,6 +190,7 @@ function createNewPost() {
   titleInput.setAttribute("id", "title")
   titleInput.setAttribute("name", "title")
   titleInput.setAttribute("type", "text")
+  titleInput.setAttribute("required", true);
   //CONTENT NEW POST
   const contentLabel = document.createElement("label")
   contentLabel.setAttribute("for", "content")
@@ -138,24 +211,93 @@ function createNewPost() {
   submitBtn.setAttribute("type", "submit")
   submitBtn.innerText = "Post"
 
-
-  postSectionEl.append(createPostForm)
+  //here goes the return of the preview-loading-state-card
+  newPostSectionEl.append(createPostForm) //HERE I APPEND THE PREVIEW
   createPostForm.append(
     formTitle, 
-    ImgLabel,
-    ImgInput,
+    imgLabel,
+    imgInput,
     titleLabel,
     titleInput,
+    contentLabel,
     contentTextarea,
     actionBtnsDiv)
   actionBtnsDiv.append(previewBtn, submitBtn)
 
-  return postSectionEl
+  return newPostSectionEl
+} // createNewPostAndPreview function
+
+//crea il preview post con i dati inventati qui sotto
+//input nothing
+//action create a preview image from data of new Post
+//output the preview post
+function createPreview() {
+  let sectionToAppend = document.querySelector(".create-post-section")//this section is the same where you find newPostSection
+  console.log(sectionToAppend)
+  let newPost = {
+    title: "A tree in blossom",
+    content: "Spring is finally here... I just love the colours.",
+    image: {
+    src: "https://images.unsplash.com/photo-1616745309504-0cb79e9ae590?ixid=MXwxMjA3fDB8MHx0b3BpYy1mZWVkfDI0fDZzTVZqVExTa2VRfHxlbnwwfHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+    alt: "a tree in blossom"
+    }
+  }
+  let previewPost = createPost(newPost)
+  console.log(previewPost)
+  sectionToAppend.append(previewPost)
+  // return previewPost
 }
 
+//NEW FUNCTION create Preview!! ***
+// function createPreview() {
+//   let postSection = document.querySelector(".create-post-section")
+//   const previewDiv = document.createElement("div");
+//   previewDiv.setAttribute("class", "post");
+
+//   const user = users.find(function (user) {
+//     return user.id === post.userId;
+//   });
+
+//   const chipEl = createUserChip(user);
+
+//   // POST IMAGE SECTION
+//   const postImgEl = document.createElement("div");
+//   postImgEl.setAttribute("class", "post--image");
+
+//   const imgEl = document.createElement("img");
+//   imgEl.setAttribute("src", post.image.src);
+//   imgEl.setAttribute("alt", post.image.alt);
+
+//   postImgEl.append(imgEl);
+
+//   // POST CONTENT SECTION
+//   const postContentEl = document.createElement("div");
+//   postContentEl.setAttribute("class", "post--content");
+
+//   const h2El = document.createElement("h2");
+//   h2El.innerText = post.title;
+
+//   const pEl = document.createElement("p");
+//   pEl.innerText = post.content;
+
+//   postContentEl.append(h2El, pEl);
+
+//   postSection.append(chipEl, postImgEl, postContentEl);
+
+//   return previewDiv;
+// }
+
 //this f creates using data from the server
-//needs: fetch to work with posts from server, f createPost
-//returns the Feed Section
+// input: nothing
+// action: creates the feed section with info from server
+// output: feed section element
+// dependencies: fetch, createPost, posts
+
+
+// input: nothing
+// action: creates the feed section with info from server
+// output: feed section element
+// dependencies: fetch, createPost, posts
 function createFeedSection() {
   const feedSectionEl = document.createElement("section");
   feedSectionEl.setAttribute("class", "feed");
@@ -174,8 +316,11 @@ function createFeedSection() {
 }
 
 //this f creates and append one comment getting data from users from above (scope)
-//returns the comment element 
+// input: comment
+// action: create a comment element
+// output: comment element 
 function createComment(comment) {
+  //one comment
   const user = users.find(function (user) {
     return user.id === comment.userId;
   });
@@ -201,7 +346,10 @@ function createComment(comment) {
 }
 
 //this f creates and appends
-//needs users from above(scope) + f createUserChip 
+// input: post
+// action: creates a post
+// output: get the liEl back
+// dependencies: createUserChip, users (from above (SCOPE)) 
 function createPost(post) {  //can get the post data from above(scope)
   const liEl = document.createElement("li");
   liEl.setAttribute("class", "post");
@@ -248,40 +396,39 @@ function createPost(post) {  //can get the post data from above(scope)
     postCommentsEl.append(commentEl);
   }
 // CREATE COMMENT FORM SECTION
-const formEl = document.createElement("form");
-formEl.setAttribute("id", "create-comment-form");
-formEl.setAttribute("autocomplete", "off");
+  const formEl = document.createElement("form");
+  formEl.setAttribute("id", "create-comment-form");
+  formEl.setAttribute("autocomplete", "off");
 
-const commentLabelEl = document.createElement("label");
-commentLabelEl.setAttribute("for", "comment");
-commentLabelEl.innerText = "Add comment";
+  const commentLabelEl = document.createElement("label");
+  commentLabelEl.setAttribute("for", "comment");
+  commentLabelEl.innerText = "Add comment";
 
-const commentInputEl = document.createElement("input");
-commentInputEl.setAttribute("id", "comment");
-commentInputEl.setAttribute("name", "comment");
-commentInputEl.setAttribute("type", "text");
+  const commentInputEl = document.createElement("input");
+  commentInputEl.setAttribute("id", "comment");
+  commentInputEl.setAttribute("name", "comment");
+  commentInputEl.setAttribute("type", "text");
 
-const submitBtn = document.createElement("button");
-submitBtn.setAttribute("type", "submit");
-submitBtn.innerText = "Comment";
+  const submitBtn = document.createElement("button");
+  submitBtn.setAttribute("type", "submit");
+  submitBtn.innerText = "Comment";
 
-formEl.append(commentLabelEl, commentInputEl, submitBtn);
+  formEl.append(commentLabelEl, commentInputEl, submitBtn);
 
-// Add a comment:
 
 // - listen to post's comment form
-formEl.addEventListener("submit", function (event) {
-  // - prevent the form from refreshing the page
-  event.preventDefault();
+  formEl.addEventListener("submit", function (event) {
+    // - prevent the form from refreshing the page
+    event.preventDefault();
 
-  // if there's an active user
-  if (currentUser !== null) {
-    // - get and store comment data
-    const comment = {
-      content: formEl.comment.value,
-      userId: currentUser.id,
-      postId: post.id
-    };
+    // if there's an active user
+    if (currentUser !== null) {
+      // - get and store comment data
+      const comment = {
+        content: formEl.comment.value,
+        userId: currentUser.id,
+        postId: post.id
+      };
 
     // - send that data to the server
     // Method: POST
@@ -316,47 +463,6 @@ liEl.append(chipEl, postImgEl, postContentEl, postCommentsEl, formEl);
 return liEl;
 }
 
-//this f creates a single user chip - it goes in the header and in the post
-//return the chip element
-function createUserChip(user) {
-  const chipEl = document.createElement("div");
-  chipEl.setAttribute("class", "chip");
 
-  const avatarEl = document.createElement("div");
-  avatarEl.setAttribute("class", "avatar-small");
 
-  const imgEl = document.createElement("img");
-  imgEl.setAttribute("src", user.avatar);
-  imgEl.setAttribute("alt", user.username);
 
-  avatarEl.append(imgEl);
-
-  const nameEl = document.createElement("span");
-  nameEl.innerText = user.username;
-
-  chipEl.append(avatarEl, nameEl);
-
-  return chipEl;
-}
-
-//this f creates and append
-//needs f createUserChip + users from above (scope)
-function createUserChipsAndAppendToWrapper() {
-  for (const user of users) {
-    const chipEl = createUserChip(user);
-
-    chipEl.addEventListener("click", function () {
-      currentUser = user;
-
-      const currentChipEl = document.querySelector(".active");
-      if (currentChipEl !== null) {
-        currentChipEl.classList.remove("active");
-      }
-
-      chipEl.classList.add("active");
-    });
-
-    const wrapperEl = document.querySelector(".header.wrapper");
-    wrapperEl.append(chipEl);
-  }
-}
